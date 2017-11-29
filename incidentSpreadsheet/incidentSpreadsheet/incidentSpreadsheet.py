@@ -50,7 +50,7 @@ def generateData():
         if len(fields) > 9 and fields[7] and fields[8]:
             # Check if it's the same incident as the last one as sometimes incidents get dispatched several times
             if fields[1] == previousincident:
-                pass
+                continue
             # If it's a vegetation fire, add it to the values
             if fields[5] in VEG_FIRE_CODES:
                 values.append(fields)
