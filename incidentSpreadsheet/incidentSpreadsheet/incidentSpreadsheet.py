@@ -21,7 +21,7 @@ dirpath = os.path.dirname(os.path.realpath(__file__))
 KEY_PATH =  dirpath + '\SLUGIS-2f3d7647c1b8.json'
 SERVICE_EMAIL = 'slugis@slugis-186423.iam.gserviceaccount.com'
 
-LOG_DIR = '//home/coreyf/gst_dashboard/data/' # For production use: //home/coreyf/gst_dashboard/data
+LOG_DIR = 'C:/cygwin/home/SLUGIS/documents/' # For production use: //home/coreyf/gst_dashboard/data
 VEG_FIRE_CODES = ["FWL", "FWLCD", "FWLG", "FWLH", "FWLL", "FWLM", "FWLMTZ", "FWLT", "FWLZ", "FVCLW", "FVCTW", "FVCW", "FOO", "FOD", "FSRW", "MTC", "FVP", "FOAW"]
 
 def getFile():
@@ -39,22 +39,26 @@ def getFile():
 
 def generateData():
     values = []
-
+    incidents = {}
+    n = 0
     # Get previous day log file & open it
     logfile = open(getFile(), 'r') 
-    previousincident = ""
     # Read Lines
     for line in logfile:
         # Split the line
         fields = line.split('|')
         if len(fields) > 9 and fields[7] and fields[8]:
-            # Check if it's the same incident as the last one as sometimes incidents get dispatched several times
-            if fields[1] == previousincident:
-                continue
-            # If it's a vegetation fire, add it to the values
+            # If it's a vegetation fire, add it to the dictionary of incidents, overwritting previous dispatch of incident
             if fields[5] in VEG_FIRE_CODES:
-                values.append(fields)
-                previousincident = fields[1]
+                if len(fields[2]) < 14:
+                    fields[2] = fields[2] + str(n).zfill(14 - len(fields[2]))
+                    n += 1
+                incidents[fields[2]] = fields
+
+    # might be able to just put incidents.items() where values is in the return,
+    # but not sure if items() will return correct format for google api
+    for incident, info in incidents.items():
+        values.append(info)
 
     return {'values' : values }
 
@@ -77,7 +81,7 @@ def main():
     body = generateData()
     # Execute append
     sheetId = '12A2DN5RlawDzPz_RfX5jN3YPNSNc6-xD8nVpwqS09is'
-    rangeName = 'GoogleSheet!A:F'
+    rangeName = 'TestSheet!A:F'
     service.spreadsheets().values().append(
         spreadsheetId=sheetId, range=rangeName, valueInputOption="RAW", body=body, insertDataOption="INSERT_ROWS").execute()
 
